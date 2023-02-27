@@ -24,6 +24,7 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 	user, err := app.Models.User.GetByEmail(email)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Invalid Credentials")
+		app.InfoLog.Println("cannot get user by email")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
@@ -36,6 +37,7 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if !validPassword {
 		app.Session.Put(r.Context(), "error", "Invalid Credentials")
+		app.InfoLog.Println("password does not match")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
