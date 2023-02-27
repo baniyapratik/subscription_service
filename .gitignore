@@ -1,0 +1,8 @@
+# binary files
+myapp
+
+# data store
+db-data
+
+# cache files
+.DS_Store
