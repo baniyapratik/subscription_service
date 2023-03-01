@@ -162,6 +162,25 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate an invoice
+	app.Wait.Add(1)
+
+	go func() {
+		defer app.Wait.Done()
+
+		invoice, err := app.getInvoice(user, plan)
+		if err != nil {
+			// send this to a chanel
+			app.ErrorChan <- err
+		}
+
+		msg := Message{
+			To:       user.Email,
+			Subject:  "your invoice",
+			Data:     invoice,
+			Template: "invoice",
+		}
+		app.sendEmail(msg)
+	}()
 
 	// send an email with attachments
 
@@ -174,6 +193,9 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	// redirect
 }
 
+func (app *Config) getInvoice(u data.User, plan *data.Plan) (string, error) {
+	return plan.PlanAmountFormatted, nil
+}
 func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 	plans, err := app.Models.Plan.GetAll()
 	if err != nil {
@@ -187,4 +209,3 @@ func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 		Data: dataMap,
 	})
 }
-
