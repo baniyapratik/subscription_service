@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"subscription_service/data"
 )
 
@@ -135,18 +136,45 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	app.Session.Put(r.Context(), "flash", "account activated. you can now login")
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
-	// generate an invoice
-
-	// send an email with attachments
 
 	// send an email with the invoice attached
 }
 
-func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
-	if !app.Session.Exists(r.Context(), "userID") {
-		app.Session.Put(r.Context(), "warning", "you must login to view this page!")
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+	// get the id of the plan that is chosen
+	id := r.URL.Query().Get("id")
+
+	planID, _ := strconv.Atoi(id)
+
+	// get the plan from the database
+	plan, err := app.Models.Plan.GetOne(planID)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "unable to find the plan")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
 	}
+	// get the user from the session
+	user, ok := app.Session.Get(r.Context(), "user").(data.User)
+	if !ok {
+		app.Session.Put(r.Context(), "error", "login first!")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// generate an invoice
+
+	// send an email with attachments
+
+	// generate a manual
+
+	// send an email with manual attached
+
+	// subscribe the user to an account
+
+	// redirect
+}
+
+func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 	plans, err := app.Models.Plan.GetAll()
 	if err != nil {
 		app.ErrorLog.Println(err)
@@ -159,3 +187,4 @@ func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 		Data: dataMap,
 	})
 }
+
