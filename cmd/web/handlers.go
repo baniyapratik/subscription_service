@@ -92,7 +92,7 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/register", http.StatusSeeOther)
 	}
 	// send an activation email
-	url := fmt.Sprintf("http://localhost/activate?email=%s", u.Email)
+	url := fmt.Sprintf("http://localhost:8090/activate?email=%s", u.Email)
 	signedUrl := GenerateTokenFromString(url)
 	app.InfoLog.Println(signedUrl)
 
@@ -112,7 +112,7 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	// validate url
 	url := r.RequestURI
-	testURL := fmt.Sprintf("http://localhost%s", url)
+	testURL := fmt.Sprintf("http://localhost:8090%s", url)
 	okay := VerifyToken(testURL)
 	if !okay {
 		app.Session.Put(r.Context(), "error", "invalid token")
@@ -140,4 +140,22 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	// send an email with attachments
 
 	// send an email with the invoice attached
+}
+
+func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
+	if !app.Session.Exists(r.Context(), "userID") {
+		app.Session.Put(r.Context(), "warning", "you must login to view this page!")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+	}
+	plans, err := app.Models.Plan.GetAll()
+	if err != nil {
+		app.ErrorLog.Println(err)
+		return
+	}
+	dataMap := make(map[string]any)
+	dataMap["plans"] = plans
+
+	app.render(w, r, "plans.page.gohtml", &TemplateData{
+		Data: dataMap,
+	})
 }
